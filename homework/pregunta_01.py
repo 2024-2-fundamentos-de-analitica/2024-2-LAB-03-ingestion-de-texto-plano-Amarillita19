@@ -1,25 +1,60 @@
-import pandas as pd
-import re
+"""
+Escriba el codigo que ejecute la accion solicitada en cada pregunta.
+"""
+
+# pylint: disable=import-outside-toplevel
+import pandas as pd  # type: ignore #ignore type
 
 def pregunta_01():
-    # Leer todas las líneas del archivo
-    with open("files/input/clusters_report.txt", encoding="utf-8") as f:
-        lines = f.readlines()
+  """
+  Construya y retorne un dataframe de Pandas a partir del archivo
+  'files/input/clusters_report.txt'. Los requierimientos son los siguientes:
 
-    # Unir líneas en un solo texto y normalizar espacios
-    raw_text = " ".join(line.strip() for line in lines)
-    raw_text = re.sub(r"\s{2,}", " ", raw_text)  # Reemplazar múltiples espacios con uno solo
+  - El dataframe tiene la misma estructura que el archivo original.
+  - Los nombres de las columnas deben ser en minusculas, reemplazando los
+  espacios por guiones bajos.
+  - Las palabras clave deben estar separadas por coma y con un solo
+  espacio entre palabra y palabra.
 
-    # Leer datos con pandas
-    df = pd.read_fwf("files/input/clusters_report.txt", skiprows=4, header=None)
 
-    # Renombrar columnas manualmente
-    df.columns = ["cluster", "cantidad_de_palabras_clave", "porcentaje_de_palabras_clave", "palabras_clave"]
+  """
+  with open("files/input/clusters_report.txt", "r", encoding="utf-8") as archivo:
+        contenido = archivo.readlines()
 
-    # Limpiar la columna de palabras clave
-    df["palabras_clave"] = df["palabras_clave"].apply(lambda x: re.sub(r"\s+", " ", x.strip()).replace(" ", ", "))
+  inicio_datos = 4  # Índice donde comienzan los datos
+  lineas_datos = contenido[inicio_datos:]
 
-    return df
+  lista_filas = []
+  fila_temp = []
 
-# Ejecutar la función y mostrar los primeros registros
-print(pregunta_01().head())
+  for linea in lineas_datos:
+        if linea.strip():  # Si la línea no está vacía, la añadimos a la fila temporal
+            fila_temp.append(linea.strip())
+        else:
+            if fila_temp:  # Cuando encontramos una línea vacía, consolidamos la fila y la almacenamos
+                lista_filas.append(" ".join(fila_temp))
+                fila_temp = []
+
+  datos_procesados = []
+  for fila in lista_filas:
+        elementos = fila.split()
+        id_cluster = int(elementos[0])
+        total_palabras = int(elementos[1])
+        porcentaje_palabras = float(elementos[2].replace(",", "."))
+        palabras_clave = (
+            " ".join(elementos[3:])
+            .replace(" ,", ",")
+            .replace(", ", ", ")
+            .strip("%")
+            .rstrip(".")
+            .strip()
+        )
+        datos_procesados.append([id_cluster, total_palabras, porcentaje_palabras, palabras_clave])
+
+  df_resultado = pd.DataFrame(datos_procesados, columns=[
+        "cluster", "cantidad_de_palabras_clave", "porcentaje_de_palabras_clave", "principales_palabras_clave"
+    ])
+
+  return df_resultado
+# Prueba la función
+print(pregunta_01())
